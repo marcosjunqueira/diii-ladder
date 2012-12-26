@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.tristrambrasil.ladder.canvas.user;
+package org.springframework.social.canvas.user;
 
 /**
  * Simple SecurityContext that stores the currently signed-in connection in a thread local.

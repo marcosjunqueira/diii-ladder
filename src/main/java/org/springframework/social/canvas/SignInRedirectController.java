@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.tristrambrasil.ladder.canvas;
+package org.springframework.social.canvas;
 
 import javax.inject.Inject;
 

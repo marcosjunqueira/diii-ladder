@@ -13,54 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.tristrambrasil.ladder.canvas.config;
+package org.springframework.social.canvas.config;
 
 import javax.inject.Inject;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import com.tristrambrasil.ladder.canvas.user.UserInterceptor;
+import org.springframework.social.canvas.user.UserInterceptor;
 import org.springframework.social.connect.UsersConnectionRepository;
 import org.springframework.web.servlet.ViewResolver;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 
 /**
  * Spring MVC Configuration.
- *
  * @author Keith Donald
  */
 @Configuration
 @EnableWebMvc
 public class WebMvcConfig extends WebMvcConfigurerAdapter {
 
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new UserInterceptor(usersConnectionRepository));
-    }
+	public void addInterceptors(InterceptorRegistry registry) {
+		registry.addInterceptor(new UserInterceptor(usersConnectionRepository));
+	}
 
-    public void addViewControllers(ViewControllerRegistry registry) {
+	public void addViewControllers(ViewControllerRegistry registry) {
 //		registry.addViewController("/signin");
-    }
+	}
 
-    @Bean
-    public ViewResolver viewResolver() {
-        InternalResourceViewResolver viewResolver = new InternalResourceViewResolver();
-        viewResolver.setPrefix("/WEB-INF/views/");
-        viewResolver.setSuffix(".jsp");
-        return viewResolver;
-    }
+	@Bean
+	public ViewResolver viewResolver() {
+		InternalResourceViewResolver viewResolver = new InternalResourceViewResolver();
+		viewResolver.setPrefix("/WEB-INF/views/");
+		viewResolver.setSuffix(".jsp");
+		return viewResolver;
+	}
 
-    @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/css/**").addResourceLocations("/css/");
-        registry.addResourceHandler("/js/**").addResourceLocations("/js/");
-    }
+	private @Inject UsersConnectionRepository usersConnectionRepository;
 
-    
-    private @Inject
-    UsersConnectionRepository usersConnectionRepository;
 }
