@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.social.canvas.config;
+package com.tristrambrasil.ladder.social.canvas.config;
 
 import javax.sql.DataSource;
 
@@ -35,14 +35,14 @@ import org.springframework.social.connect.jdbc.JdbcUsersConnectionRepository;
  * @author Keith Donald
  */
 @Configuration
-@ComponentScan(basePackages = "org.springframework.social.canvas", excludeFilters = { @Filter(Configuration.class) })
-@PropertySource("classpath:org/springframework/social/canvas/config/application.properties")
+@ComponentScan(basePackages = "com.tristrambrasil.ladder.social.canvas", excludeFilters = { @Filter(Configuration.class) })
+@PropertySource("classpath:com/tristrambrasil/ladder/social/canvas/config/application.properties")
 public class MainConfig {
 
 	@Bean(destroyMethod = "shutdown")
 	public DataSource dataSource() {
 		EmbeddedDatabaseFactory factory = new EmbeddedDatabaseFactory();
-		factory.setDatabaseName("spring-social-canvas");
+		factory.setDatabaseName("diii-ladder");
 		factory.setDatabaseType(EmbeddedDatabaseType.H2);
 		factory.setDatabasePopulator(databasePopulator());
 		return factory.getDatabase();

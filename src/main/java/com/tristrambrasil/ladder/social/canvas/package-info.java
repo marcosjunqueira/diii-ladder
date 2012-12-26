@@ -1,4 +1,4 @@
 /**
  * Contains @Controllers that demonstrate quick-start application functionality.
  */
-package org.springframework.social.canvas;
+package com.tristrambrasil.ladder.social.canvas;

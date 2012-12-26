@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.social.canvas.user;
+package com.tristrambrasil.ladder.social.canvas.user;
 
 import java.util.concurrent.atomic.AtomicLong;
 

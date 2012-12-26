@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.social.canvas.config;
+package com.tristrambrasil.ladder.social.canvas.config;
 
 import javax.inject.Inject;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.social.canvas.user.UserInterceptor;
+import com.tristrambrasil.ladder.social.canvas.user.UserInterceptor;
 import org.springframework.social.connect.UsersConnectionRepository;
 import org.springframework.web.servlet.ViewResolver;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;

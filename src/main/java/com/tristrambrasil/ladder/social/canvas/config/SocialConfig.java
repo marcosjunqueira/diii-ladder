@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.social.canvas.config;
+package com.tristrambrasil.ladder.social.canvas.config;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
@@ -24,10 +24,10 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.encrypt.Encryptors;
-import org.springframework.social.canvas.user.SecurityContext;
-import org.springframework.social.canvas.user.SimpleConnectionSignUp;
-import org.springframework.social.canvas.user.SimpleSignInAdapter;
-import org.springframework.social.canvas.user.User;
+import com.tristrambrasil.ladder.social.canvas.user.SecurityContext;
+import com.tristrambrasil.ladder.social.canvas.user.SimpleConnectionSignUp;
+import com.tristrambrasil.ladder.social.canvas.user.SimpleSignInAdapter;
+import com.tristrambrasil.ladder.social.canvas.user.User;
 import org.springframework.social.connect.ConnectionFactory;
 import org.springframework.social.connect.ConnectionFactoryLocator;
 import org.springframework.social.connect.ConnectionRepository;
