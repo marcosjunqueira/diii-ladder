@@ -15,8 +15,9 @@
  */
 package com.tristrambrasil.ladder.social.canvas.config;
 
+import com.mongodb.Mongo;
+import com.mongodb.WriteConcern;
 import javax.inject.Inject;
-import javax.sql.DataSource;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,12 +29,22 @@ import com.tristrambrasil.ladder.social.canvas.user.SecurityContext;
 import com.tristrambrasil.ladder.social.canvas.user.SimpleConnectionSignUp;
 import com.tristrambrasil.ladder.social.canvas.user.SimpleSignInAdapter;
 import com.tristrambrasil.ladder.social.canvas.user.User;
+import javax.validation.Validator;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.data.mongodb.MongoDbFactory;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.SimpleMongoDbFactory;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.social.connect.ConnectionFactory;
 import org.springframework.social.connect.ConnectionFactoryLocator;
 import org.springframework.social.connect.ConnectionRepository;
 import org.springframework.social.connect.NotConnectedException;
 import org.springframework.social.connect.UsersConnectionRepository;
-import org.springframework.social.connect.jdbc.JdbcUsersConnectionRepository;
+import org.springframework.social.connect.mongo.ConnectionConverter;
+import org.springframework.social.connect.mongo.ConnectionService;
+import org.springframework.social.connect.mongo.MongoUsersConnectionRepository;
 import org.springframework.social.connect.support.ConnectionFactoryRegistry;
 import org.springframework.social.connect.web.ProviderSignInController;
 import org.springframework.social.facebook.api.Facebook;
@@ -41,68 +52,104 @@ import org.springframework.social.facebook.connect.FacebookConnectionFactory;
 
 /**
  * Spring Social Configuration.
+ *
  * @author Keith Donald
  */
 @Configuration
+@ComponentScan(basePackages = "org.springframework.social.connect.mongo")
+@PropertySource("classpath:com/tristrambrasil/ladder/social/canvas/config/application.properties")
 public class SocialConfig {
+    
+    @Inject
+    private Environment environment;
+    @Inject
+    private ConnectionService mongoService;
 
-	@Inject
-	private Environment environment;
+    /**
+     * When a new provider is added to the app, register its
+     * {@link ConnectionFactory} here.
+     *
+     * @see FacebookConnectionFactory
+     */
+    @Bean
+    public ConnectionFactoryLocator connectionFactoryLocator() {
+        ConnectionFactoryRegistry registry = new ConnectionFactoryRegistry();
+        registry.addConnectionFactory(new FacebookConnectionFactory(environment.getProperty("facebook.clientId"),
+                environment.getProperty("facebook.clientSecret")));
+        return registry;
+    }
 
-	@Inject
-	private DataSource dataSource;
+    /**
+     * Singleton data access object providing access to connections across all
+     * users.
+     */
+    @Bean
+    public UsersConnectionRepository usersConnectionRepository() {
+        MongoUsersConnectionRepository repository = new MongoUsersConnectionRepository(mongoService,
+                connectionFactoryLocator(), Encryptors.noOpText());
+        repository.setConnectionSignUp(new SimpleConnectionSignUp());
+        return repository;
+    }
 
-	/**
-	 * When a new provider is added to the app, register its {@link ConnectionFactory} here.
-	 * @see FacebookConnectionFactory
-	 */
-	@Bean
-	public ConnectionFactoryLocator connectionFactoryLocator() {
-		ConnectionFactoryRegistry registry = new ConnectionFactoryRegistry();
-		registry.addConnectionFactory(new FacebookConnectionFactory(environment.getProperty("facebook.clientId"),
-				environment.getProperty("facebook.clientSecret")));
-		return registry;
-	}
+    /**
+     * Request-scoped data access object providing access to the current user's
+     * connections.
+     */
+    @Bean
+    @Scope(value = "request", proxyMode = ScopedProxyMode.INTERFACES)
+    public ConnectionRepository connectionRepository() {
+        User user = SecurityContext.getCurrentUser();
+        return usersConnectionRepository().createConnectionRepository(user.getId());
+    }
 
-	/**
-	 * Singleton data access object providing access to connections across all users.
-	 */
-	@Bean
-	public UsersConnectionRepository usersConnectionRepository() {
-		JdbcUsersConnectionRepository repository = new JdbcUsersConnectionRepository(dataSource,
-				connectionFactoryLocator(), Encryptors.noOpText());
-		repository.setConnectionSignUp(new SimpleConnectionSignUp());
-		return repository;
-	}
+    /**
+     * A proxy to a request-scoped object representing the current user's
+     * primary Facebook account.
+     *
+     * @throws NotConnectedException if the user is not connected to facebook.
+     */
+    @Bean
+    @Scope(value = "request", proxyMode = ScopedProxyMode.INTERFACES)
+    public Facebook facebook() {
+        return connectionRepository().getPrimaryConnection(Facebook.class).getApi();
+    }
 
-	/**
-	 * Request-scoped data access object providing access to the current user's connections.
-	 */
-	@Bean
-	@Scope(value="request", proxyMode=ScopedProxyMode.INTERFACES)
-	public ConnectionRepository connectionRepository() {
-	    User user = SecurityContext.getCurrentUser();
-	    return usersConnectionRepository().createConnectionRepository(user.getId());
-	}
+    /**
+     * The Spring MVC Controller that allows users to sign-in with their
+     * provider accounts.
+     */
+    @Bean
+    public ProviderSignInController providerSignInController() {
+        ProviderSignInController signInController = new ProviderSignInController(connectionFactoryLocator(), usersConnectionRepository(), new SimpleSignInAdapter());
+        signInController.setPostSignInUrl("http://apps.facebook.com/diii-ladder/");
+        return signInController;
+    }
 
-	/**
-	 * A proxy to a request-scoped object representing the current user's primary Facebook account.
-	 * @throws NotConnectedException if the user is not connected to facebook.
-	 */
-	@Bean
-	@Scope(value="request", proxyMode=ScopedProxyMode.INTERFACES)	
-	public Facebook facebook() {
-	    return connectionRepository().getPrimaryConnection(Facebook.class).getApi();
-	}
-	
-	/**
-	 * The Spring MVC Controller that allows users to sign-in with their provider accounts.
-	 */
-	@Bean
-	public ProviderSignInController providerSignInController() {
-		ProviderSignInController signInController = new ProviderSignInController(connectionFactoryLocator(), usersConnectionRepository(), new SimpleSignInAdapter()); 
-		signInController.setPostSignInUrl("http://apps.facebook.com/diii-ladder/");
-		return signInController; 
-	}
+    public @Bean
+    MongoDbFactory mongoDbFactory() throws Exception {
+        return new SimpleMongoDbFactory(
+                new Mongo(environment.getProperty("mongo.hostName"),
+                environment.getProperty("mongo.portNumber", Integer.class)),
+                environment.getProperty("mongo.databaseName"));
+    }
+
+    public @Bean
+    MongoTemplate mongoTemplate() throws Exception {
+        MongoTemplate mongoTemplate = new MongoTemplate(mongoDbFactory());
+        mongoTemplate.setWriteConcern(WriteConcern.SAFE);
+        return mongoTemplate;
+    }
+
+    public @Bean
+    TextEncryptor textEncryptor() {
+        return Encryptors.noOpText();
+    }
+
+    public @Bean
+    ConnectionConverter connectionConverter() {
+        return new ConnectionConverter(
+                connectionFactoryLocator(),
+                textEncryptor());
+    }
 
 }
